@@ -12,34 +12,23 @@ def generate_palette(img: Image, n_colours:int = 5) -> io.BytesIO:
 
 	dist = lambda p, q: sqrt(sum((p[i] - q[i]) ** 2 for i in range(len(p))))
 
-	def assign_points(clusters, points):
-		point_lists = [[] for i in range(n_colours)]
+	def closest_cluster(point, clusters): 
+		return min(
+	   		map(lambda i: (i, dist(point, clusters[i].center)), range(n_colors)),
+	    		key = lambda x: x[1])
 
-		for point in points:
-			smallest_distance = float('inf')
-
-			for i in range(n_colours):
-				distance = dist(point, clusters[i].center)
-
-				if distance < smallest_distance:
-				  smallest_distance = distance
-				  idx = i
-
-			point_lists[idx].append(point)
-
-		return point_lists
+	def assign_points(clusters, points): 
+		associated_points = [[] for i in range(n_colors)]
+		for point in points :
+			cluster_id = closest_cluster(point,clusters)[0]
+			associated_points[cluster_id].append(point)
+		return associated_points
 
 
 	def get_center(points):
-		n_dim = len(points[0])
-
-		vals = [0.0 for i in range(n_dim)]
-		for point in points:
-
-			for i in range(n_dim):
-			  vals[i] += point[i]
-
-		center = [(val / len(points)) for val in vals]
+		dimensions = len(points[0])
+		sum_on = lambda dimension: sum(map(lambda point: point[dimension], points))
+		center = [ sum_on(dimension) / len(points) for dimension in range(dimensions)]
 		return center
 
 
