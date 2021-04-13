@@ -64,62 +64,65 @@ class Math(commands.Cog):
                 else:
                     ranges.update({'x': default_ranges['x']})
 
-            wait_message = await ctx.send(embed=discord.Embed(title=f"`Plotting {expression}`", description="Generating. Please wait..."))
+            wait_message = await ctx.send(embed=discord.Embed(
+                title=f"`Plotting {expression}`",
+                description="Generating. Please wait..."))
 
             # PLOT GRAPH
+            async def do_graphing(*, method, ranges_names, img_name: str):
+                buf = method(expression, *map(ranges, ranges_names))
+                buf.seek(0)
+
+                await ctx.send(file=discord.File(buf, img_name))
+                await wait_message.delete()
+            
             if polar:
                 if animation:
-                    buf = graphing.animated_polar(expression, ranges['theta'], ranges['a'])
-                    buf.seek(0)
-
-                    await ctx.send(file=discord.File(buf, "anim.gif"))
-                    await wait_message.delete()
+                    await do_graphing(
+                        method=graphing.animated_polar,
+                        ranges_names=['theta','a'],
+                        img_name="anim.gif")
                 else:
-                    buf = graphing.static_polar(expression, ranges['theta'])
-                    buf.seek(0)
-
-                    await ctx.send(file=discord.File(buf, "image.png"))
-                    await wait_message.delete()
-
+                    await do_graphing(
+                        method=graphing.static_polar
+                        ranges_names=['theta'],
+                        img_name="image.png")
+                    
             elif surface:
                 if animation and bool_flags['-rt']:
-                    buf = graphing.animated_surface_rotate(expression, ranges['x'], ranges['y'], ranges['a'])
-                    buf.seek(0)
-
-                    await ctx.send(file=discord.File(buf, "anim.gif"))
-                    await wait_message.delete()
+                    await do_graphing(
+                        method=graphing.animated_surface_rotate
+                        ranges_names=['x','y','a']
+                        img_name="anim.gif")
+                    
                 elif animation:
-                    buf = graphing.animated_surface(expression, ranges['x'], ranges['y'], ranges['a'])
-                    buf.seek(0)
-
-                    await ctx.send(file=discord.File(buf, "anim.gif"))
-                    await wait_message.delete()
+                    await do_graphing(
+                        method=graphing.animated_surface
+                        ranges_names=['x','y','a']
+                        img_name="anim.gif")
+                    
                 elif bool_flags['-rt']:
-                    buf = graphing.static_surface_rotate(expression, ranges['x'], ranges['y'])
-                    buf.seek(0)
-
-                    await ctx.send(file=discord.File(buf, "anim.gif"))
-                    await wait_message.delete()
+                    await do_graphing(
+                        method=graphing.static_surface_rotate
+                        ranges_names=['x','y']
+                        img_name="anim.gif")
                 else:
-                    buf = graphing.static_surface(expression, ranges['x'], ranges['y'])
-                    buf.seek(0)
-
-                    await ctx.send(file=discord.File(buf, "image.png"))
-                    await wait_message.delete()
-
+                    await do_graphing(
+                        method=graphing.static_surface
+                        ranges_names=['x','y']
+                        img_name="image.png")
             else:
                 if animation:
-                    buf = graphing.animated_cartesian(expression, ranges['x'], ranges['a'])
-                    buf.seek(0)
-
-                    await ctx.send(file=discord.File(buf, "anim.gif"))
-                    await wait_message.delete()
+                    await do_graphing(
+                        method=graphing.animated_cartesian
+                        ranges_names=['x','a']
+                        img_name="anim.gif")
                 else:
-                    buf = graphing.static_cartesian(expression, ranges['x'])
-                    buf.seek(0)
+                    await do_graphing(
+                        method=graphing.static_cartesian
+                        ranges_names=['x']
+                        img_name="image.png")
 
-                    await ctx.send(file=discord.File(buf, "image.png"))
-                    await wait_message.delete()
         except Exception as e:
             await ctx.send(f"An error occurred!\nError: {e}")
             await wait_message.delete()
